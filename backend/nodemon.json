@@ -1,0 +1,11 @@
+{
+  "watch": ["src/**/*.js"],
+  "ext": "js,json,env",
+  "ignore": ["node_modules/**/*"],
+  "exec": "node src/index.js",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "verbose": true,
+  "restartable": "rs"
+}
