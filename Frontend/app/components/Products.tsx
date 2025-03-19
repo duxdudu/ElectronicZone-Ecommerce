@@ -4,6 +4,25 @@ import React from 'react'
 import Link from "next/link";
 
 const DashProducts = () => {
+  const handleDelete = (productId: string | number, productName: string) => {
+    if (window.confirm(`Are you sure you want to delete ${productName}?`)) {
+      fetch(`http://localhost:3002/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to delete product');
+        setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
+      })
+      .catch(err => {
+        console.error('Error deleting product:', err);
+        alert('Failed to delete product. Please try again.');
+      });
+    }
+  };
+
   interface Category {
   id: string;
   name: string;
@@ -331,7 +350,10 @@ const [categories, setCategories] = React.useState<Category[]>([]);
                           <button className="p-1 text-gray-500 hover:text-blue-500">
                             <FileEdit className="w-4 h-4" />
                           </button>
-                          <button className="p-1 text-gray-500 hover:text-red-500">
+                          <button 
+                            onClick={() => handleDelete(product.id, product.name)}
+                            className="p-1 text-gray-500 hover:text-red-500"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>

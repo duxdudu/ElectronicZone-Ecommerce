@@ -86,7 +86,7 @@ export const createProduct = async (req, res) => {
     }
 
     // Get the image path if a file was uploaded
-    const imagePath = req.file ? `http://localhost:3002/uploads/${req.file.originalname}` : null;
+    const imagePath = req.file ? `/uploads/${req.file.originalname}` : null;
 
     const newProduct = new Product({
       name: name.trim(),

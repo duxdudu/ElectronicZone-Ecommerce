@@ -6,6 +6,10 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import productRoutes from "./routes/productRoutes.js";
+import ensureUploadsDir from "./scripts/ensureUploadsDir.js";
+
+// Ensure uploads directory exists
+ensureUploadsDir();
 
 // Load environment variables
 dotenv.config();

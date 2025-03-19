@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
+import Product from '../models/Product.js';
 import { getAllProducts, getProductById, getProductsByCategory, searchProducts, createProduct } from '../controllers/productController.js';
 
 const router = express.Router();
@@ -43,5 +44,18 @@ router.get('/:id', getProductById);
 
 // Create a new product
 router.post('/', upload.single('image'), createProduct);
+
+// Delete a product
+router.delete('/:id', async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    res.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 export default router;

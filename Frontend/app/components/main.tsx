@@ -8,6 +8,7 @@ import { useCart } from "@/app/context/CartContext";
 import { useTheme } from "@/app/context/ThemeContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Pagination } from "@/components/ui/pagination";
+import { getImageUrl } from '../utils/constants';
 
 interface Product {
   id: string | number;
@@ -41,7 +42,7 @@ export default function Home() {
   ];
   const [fadeIn, setFadeIn] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [recentlyViewed, setRecentlyViewed] = useState<
+  const [recentlyViewed, setRecentlyViewe] = useState<
   (
     | Computer
     | Smartphone
@@ -60,7 +61,7 @@ useEffect(() => {
     const randomProducts = [...allProducts]
       .sort(() => 0.5 - Math.random())
       .slice(0, 4);
-    setRecentlyViewed(randomProducts);
+    setRecentlyViewe(randomProducts);
   };
   fetchProducts();
 }, []);
@@ -203,7 +204,7 @@ useEffect(() => {
                       className={`${theme === 'dark' ? 'bg-dark-secondary text-dark-foreground border-dark-muted' : 'bg-white border-gray-100'} rounded-2xl shadow-lg overflow-hidden hover:shadow-lg transition-shadow border-2`}>
                       <div className="relative h-40">
                         <Image
-                          src={product?.image ? `${API_BASE_URL}${product.image}` : "/placeholder.svg"}
+                          src={getImageUrl(product?.image)}
                           alt={product?.name ?? "Product image"}
                           fill
                           className="object-contain w-full h-full"
@@ -282,10 +283,11 @@ useEffect(() => {
               <div key={item.id} className="bg-white rounded-lg border p-4">
                 <div className="aspect-video relative mb-3">
                   <Image
-                    src={item.image || "/placeholder.svg"}
-                    alt={item.name}
+                    src={getImageUrl(item.image)}
+                    alt={item.name ?? "Product image"}
                     fill
-                    className="object-contain"
+                    className="object-contain w-full h-full"
+                    style={{ objectFit: "contain" }}
                   />
                 </div>
 

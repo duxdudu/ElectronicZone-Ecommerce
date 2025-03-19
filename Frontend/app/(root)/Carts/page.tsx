@@ -1,5 +1,13 @@
 "use client";
-import { Computer, Smartphone, TvMonitor, GamingEquipment, Headphone, Speaker, Accessory } from "@/app/types/products";
+import {
+  Computer,
+  Smartphone,
+  TvMonitor,
+  GamingEquipment,
+  Headphone,
+  Speaker,
+  Accessory,
+} from "@/app/types/products";
 import { useCart } from "@/app/context/CartContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,9 +27,137 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { set } from "date-fns";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotal } = useCart();
+  const { toast } = useToast();
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [cardData, setCardData] = useState({
+    cardNumber: "",
+    expDate: "",
+    cvv: "",
+  });
+
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    houseNo: "",
+    address: "",
+    sector: "",
+    cell: "",
+    postalCode: "",
+    landmark: "",
+  });
+  const [deliveryOption, setDeliveryOption] = useState("standard");
+  const [paymentMethod, setPaymentMethod] = useState("delivery");
+  const [loading, setLoading] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      // Validate form data
+      if (
+        !formData.firstName ||
+        !formData.lastName ||
+        !formData.email ||
+        !formData.phone ||
+        !formData.houseNo ||
+        !formData.address ||
+        !formData.sector ||
+        !formData.cell
+      ) {
+        throw new Error("Please fill in all required fields");
+      }
+
+      // Calculate shipping cost based on delivery option
+      const shippingCost =
+        deliveryOption === "standard"
+          ? 0
+          : deliveryOption === "express"
+          ? 2
+          : 25;
+
+      const orderData = {
+        product: items.map(item => item.name).join(", "),
+        description: items.map(item => `${item.name} (${item.quantity})`).join(", "),
+        price: getTotal() + shippingCost,
+        category: items[0]?.category || "Mixed",
+        status: "pending",
+        paymentInfo: {
+          amount: getTotal() + shippingCost,
+          method: paymentMethod
+        },
+        customer: `${formData.firstName} ${formData.lastName}`,
+        shippingAddress: {
+          houseNo: formData.houseNo,
+          address: formData.address,
+          sector: formData.sector,
+          cell: formData.cell,
+          postalCode: formData.postalCode,
+          email: formData.email,
+          phone: formData.phone
+        },
+        createdAt: new Date().toISOString()
+      };
+
+      const response = await fetch("http://localhost:3002/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create order");
+      }
+
+      const result = await response.json();
+      toast({
+        title: "Success",
+        description: "Order placed successfully!",
+      });
+
+      // Reset form and cart
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        houseNo: "",
+        address: "",
+        sector: "",
+        cell: "",
+        postalCode: "",
+        landmark: "",
+      });
+      setShowing(false);
+      setShowingDelivery(false);
+      setPayment(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to place order",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get a selection of products to show as recently viewed
   const [recentlyViewed, setRecentlyViewed] = useState<
     (
@@ -547,29 +683,115 @@ export default function CartPage() {
                   value="card"
                   id="card"
                   className="text-orange-500"
+                  onClick={() => setShowCardForm(!showCardForm)}
                 />
                 <Label htmlFor="card" className="font-medium">
                   Credit /Debit Card
                 </Label>
-                <div className="flex gap-1 ">
+                <div className="flex gap-1">
                   <div className="w-6 h-6 bg-blue-500 rounded-sm"></div>
                   <div className="w-6 h-6 bg-blue-700 rounded-sm"></div>
                   <div className="w-6 h-6 bg-blue-300 rounded-sm"></div>
                 </div>
               </div>
+
+              {showCardForm && (
+                <div className="mt-4 p-4 border rounded-lg space-y-4">
+                  <div>
+                    <Label htmlFor="cardNumber">Card Number</Label>
+                    <Input
+                      id="cardNumber"
+                      type="text"
+                      placeholder="1234 5678 9012 3456"
+                      maxLength={19}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/\D/g, "");
+                        value = value.replace(/(.{4})/g, "$1 ").trim();
+                        e.target.value = value;
+                      }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="expDate">Expiration Date</Label>
+                      <Input
+                        id="expDate"
+                        type="text"
+                        placeholder="MM/YY"
+                        maxLength={5}
+                        onChange={(e) => {
+                          let value = e.target.value.replace(/\D/g, "");
+                          if (value.length >= 2) {
+                            value = value.slice(0, 2) + "/" + value.slice(2);
+                          }
+                          e.target.value = value;
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cvv">Security Code (CVV)</Label>
+                      <Input
+                        id="cvv"
+                        type="password"
+                        maxLength={4}
+                        placeholder="****"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="pl-6 text-gray-500 -mt-4">
                 Pay with your Credit / Debit Card
               </div>
 
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem
-                  value="bank"
-                  id="bank"
-                  className="text-orange-500"
-                />
-                <Label htmlFor="bank" className="font-medium">
-                  Direct Bank Transfer
-                </Label>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem
+                    value="bank"
+                    id="bank"
+                    className="text-orange-500"
+                    onClick={() => {
+                      setPaymentMethod("bank");
+                      setShowCardForm(!showCardForm);
+                    }}
+                  />
+                  <Label htmlFor="bank" className="font-medium">
+                    Direct Bank Transfer
+                  </Label>
+                </div>
+                {paymentMethod === "bank" && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-700 mb-2">
+                        Bank Account Details
+                      </h4>
+                      <div className="text-sm text-gray-600">
+                        <p>Bank: National Bank of Rwanda</p>
+                        <p>Account Name: ElectronicZone Ltd</p>
+                        <p>Account Number: 1234-5678-9012-3456</p>
+                        <p>Swift Code: RNBKRWRW</p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Your Bank Account Number
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Enter your bank account number"
+                        className="w-full"
+                        value={formData.bankAccountNumber || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            bankAccountNumber: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="pl-6 text-gray-500 -mt-4">
                 Make payment directly through bank accounts
@@ -586,7 +808,7 @@ export default function CartPage() {
                 </Label>
               </div>
               <div className="pl-6 text-gray-500 -mt-4">
-                Make payment through Gpay, paypal,paytm etc
+                Make payment through Momo , Gpay, paypal,paytm etc
               </div>
             </RadioGroup>
 
@@ -602,7 +824,7 @@ export default function CartPage() {
                 Back
               </Button>
               <Button className="bg-orange-500 hover:bg-orange-600 px-8">
-                ${total.toFixed(2)}
+                Pay ${total.toFixed(2)}
               </Button>
             </div>
           </div>

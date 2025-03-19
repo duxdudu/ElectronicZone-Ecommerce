@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from "@/hooks/use-toast";
+import { API_BASE_URL } from '@/app/utils/constants';
 
 interface ProductFormData {
   name: string;
@@ -99,27 +100,36 @@ export function useProductForm(): UseProductFormReturn {
     }
 
     try {
-      const response = await fetch('http://localhost:3002/products', {
+      const response = await fetch(`${API_BASE_URL}/products`, {
         method: 'POST',
-        body: formDataToSend,
+        body: formDataToSend
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create product');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to create product');
       }
 
-      await response.json();
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid response format from server');
+      }
+
+      const data = await response.json();
+      
+      // Update image preview with the full URL if image was uploaded
+      if (data.image) {
+        setImagePreview(`${API_BASE_URL}${data.image}`);
+      }
 
       toast({
         title: "Success",
-        description: "Product saved successfully",
-        variant: "default"
+        description: "Product created successfully",
       });
-
+      
       router.push('/dashboard/products');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create product';
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(errorMessage);
       toast({
         title: "Error",
@@ -132,10 +142,8 @@ export function useProductForm(): UseProductFormReturn {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return {
