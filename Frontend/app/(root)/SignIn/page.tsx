@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState } from 'react';
-import { signIn } from '@/app/services/auth';
+// Authentication removed
 import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,21 +21,40 @@ const { toast } = useToast();
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
+  setError('');
+
   try {
-    await signIn({ email, password });
+    const response = await fetch('http://localhost:3002/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Login failed');
+    }
+
+    // Store the token
+    localStorage.setItem('token', data.token);
+
     toast({
       title: "Success!",
       description: "You have successfully logged in.",
       variant: "default",
     });
+
     router.push('/');
   } catch (err: any) {
+    setError(err.message);
     toast({
       title: "Error",
-      description: err.message || 'Failed to sign in',
+      description: err.message,
       variant: "destructive",
     });
-    setError(err.message || 'Failed to sign in');
   }
 };
 

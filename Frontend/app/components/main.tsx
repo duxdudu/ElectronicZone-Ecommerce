@@ -77,7 +77,10 @@ useEffect(() => {
         const filtered = data.filter((product: Product) =>
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.description.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        ).map(product => ({
+          ...product,
+          image: getImageUrl(product.image)
+        }));
         setFilteredProducts(filtered);
       } catch (error) {
         console.error('Error fetching products:', error);

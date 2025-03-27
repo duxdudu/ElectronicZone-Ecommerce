@@ -35,19 +35,19 @@ export interface TvMonitor extends BaseProduct {
 }
 
 export interface GamingEquipment extends BaseProduct {
-  type: 'Console' | 'Controller' | 'Accessory';
+  type: "Console" | "Controller" | "Accessory";
   compatibility: string[];
   features: string[];
 }
 
 export interface Headphone extends BaseProduct {
-  type: 'Wireless' | 'Wired';
+  type: "Wireless" | "Wired";
   connectivity: string[];
   features: string[];
 }
 
 export interface Speaker extends BaseProduct {
-  type: 'Portable' | 'Home' | 'Professional';
+  type: "Portable" | "Home" | "Professional";
   power: string;
   connectivity: string[];
 }
@@ -58,20 +58,20 @@ export interface Accessory extends BaseProduct {
 }
 
 // API base URL
-const API_BASE_URL = 'http://localhost:3002';
+const API_BASE_URL = "http://localhost:3002";
 
 // Helper function to get all products
 export const getAllProducts = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/products`);
     if (!response.ok) {
-      throw new Error('Failed to fetch products');
+      throw new Error("Failed to fetch products");
     }
     const data = await response.json();
-    console.log(data)
+    console.log(data);
     return data;
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error("Error fetching products:", error);
     return [];
   }
 };
@@ -79,7 +79,9 @@ export const getAllProducts = async () => {
 // Helper function to get products by category
 export const getProductsByCategory = async (category: string) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/products/category/${category}`);
+    const response = await fetch(
+      `${API_BASE_URL}/products/category/${category}`
+    );
     if (!response.ok) {
       throw new Error(`Failed to fetch ${category} products`);
     }
@@ -96,12 +98,12 @@ export const getProductById = async (id: string) => {
   try {
     const response = await fetch(`${API_BASE_URL}/products/${id}`);
     if (!response.ok) {
-      throw new Error('Failed to fetch product');
+      throw new Error("Failed to fetch product");
     }
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error("Error fetching product:", error);
     return null;
   }
 };
@@ -109,20 +111,23 @@ export const getProductById = async (id: string) => {
 // Helper function to search products
 export const searchProducts = async (query: string) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/products/search?q=${encodeURIComponent(query)}`);
+    const response = await fetch(
+      `${API_BASE_URL}/products/search?q=${encodeURIComponent(query)}`
+    );
     if (!response.ok) {
-      throw new Error('Failed to search products');
+      throw new Error("Failed to search products");
     }
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error searching products:', error);
+    console.error("Error searching products:", error);
     return [];
   }
 };
 
 // Helper function to create a new product
 export interface CreateProductData {
+  quantity: number;
   name: string;
   price: number;
   description: string;
@@ -137,25 +142,26 @@ export interface CreateProductData {
 export const createProduct = async (productData: CreateProductData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/products`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(productData),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to create product');
+      throw new Error(errorData.message || "Failed to create product");
     }
 
     const data = await response.json();
     return { success: true, data };
   } catch (error) {
-    console.error('Error creating product:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'An unknown error occurred'
+    console.error("Error creating product:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unknown error occurred",
     };
   }
 };

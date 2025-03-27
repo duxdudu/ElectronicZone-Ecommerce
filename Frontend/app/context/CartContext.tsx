@@ -10,6 +10,7 @@ type CartItem = {
   quantity: number;
   image?: string;
   description?: string;
+  category?: string;
 };
 
 type CartContextType = {
@@ -29,18 +30,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   const addItem = (newItem: Omit<CartItem, 'quantity'>) => {
-    setItems((currentItems) => {
-      const numericId = typeof newItem.id === 'string' ? parseInt(newItem.id) : newItem.id;
-      const existingItemIndex = currentItems.findIndex(item => item.id === numericId && item.name === newItem.name);
-      if (existingItemIndex >= 0) {
-        const updatedItems = [...currentItems];
-        updatedItems[existingItemIndex] = {
-          ...updatedItems[existingItemIndex],
-          quantity: updatedItems[existingItemIndex].quantity + 1
-        };
-        return updatedItems;
+    setItems(currentItems => {
+      // Check if the item already exists in the cart using both ID and name
+      const existingItem = currentItems.find(item => 
+        item.id === newItem.id && item.name === newItem.name
+      );
+      
+      if (existingItem) {
+        // If item exists with same ID and name, update its quantity
+        return currentItems.map(item =>
+          (item.id === newItem.id && item.name === newItem.name)
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
       }
-      return [...currentItems, { ...newItem, id: numericId, quantity: 1 }];
+      
+      // If item doesn't exist, add it as a new item
+      return [...currentItems, { ...newItem, quantity: 1 }];
     });
 
     toast({
@@ -51,28 +57,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const removeItem = (id: string | number) => {
-    const numericId = typeof id === 'string' ? parseInt(id) : id;
     setItems(currentItems => {
-      const existingItem = currentItems.find(item => item.id === numericId);
+      const existingItem = currentItems.find(item => item.id === id);
       if (existingItem && existingItem.quantity > 1) {
         return currentItems.map(item =>
-          item.id === numericId && item.name === existingItem.name && item.price === existingItem.price
+          item.id === id
             ? { ...item, quantity: item.quantity - 1 }
             : item
         );
       }
-      return currentItems.filter(item => !(item.id === numericId && item.name === existingItem?.name && item.price === existingItem?.price));
+      return currentItems.filter(item => item.id !== id);
     });
   };
 
   const updateQuantity = (id: string | number, quantity: number) => {
     if (quantity < 1) return;
-    setItems(currentItems => {
-      const numericId = typeof id === 'string' ? parseInt(id) : id;
-      return currentItems.map(item =>
-        item.id === numericId ? { ...item, quantity } : item
-      );
-    });
+    setItems(currentItems =>
+      currentItems.map(item =>
+        item.id === id ? { ...item, quantity } : item
+      )
+    );
   };
 
   const clearCart = () => {

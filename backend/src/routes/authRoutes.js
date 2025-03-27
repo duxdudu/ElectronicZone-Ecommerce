@@ -1,13 +1,16 @@
 import express from 'express';
-import { signup, signin, protect, updateProfile } from '../controllers/authController.js';
+import { signup, login, protect, restrictTo } from '../controllers/authController.js';
 
 const router = express.Router();
 
+// Authentication routes
 router.post('/signup', signup);
-router.post('/signin', signin);
+router.post('/login', login);
 
 // Protected routes
 router.use(protect);
-router.patch('/updateProfile', updateProfile);
+
+// Admin only routes
+router.use(restrictTo('admin'));
 
 export default router;

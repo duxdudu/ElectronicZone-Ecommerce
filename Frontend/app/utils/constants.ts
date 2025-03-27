@@ -2,8 +2,11 @@
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 
 // Image URL Configuration
-export const getImageUrl = (imagePath: string | null): string => {
-  if (!imagePath) return '/placeholder.jpg';
+export const getImageUrl = (imagePath: string | null | undefined): string => {
+  if (!imagePath || typeof imagePath !== 'string') return '/placeholder.jpg';
+  
+  // If the path is a base64 data URL, return it as is
+  if (imagePath.startsWith('data:')) return imagePath;
   
   // If the image path is already a full URL, return it as is
   if (imagePath.startsWith('http')) return imagePath;

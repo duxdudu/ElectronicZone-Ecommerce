@@ -102,7 +102,10 @@ export function useProductForm(): UseProductFormReturn {
     try {
       const response = await fetch(`${API_BASE_URL}/products`, {
         method: 'POST',
-        body: formDataToSend
+        body: formDataToSend,
+        headers: {
+          'Accept': 'application/json'
+        }
       });
 
       if (!response.ok) {
@@ -119,7 +122,7 @@ export function useProductForm(): UseProductFormReturn {
       
       // Update image preview with the full URL if image was uploaded
       if (data.image) {
-        setImagePreview(`${API_BASE_URL}${data.image}`);
+        setImagePreview(data.image.startsWith('http') ? data.image : `${API_BASE_URL}${data.image}`);
       }
 
       toast({

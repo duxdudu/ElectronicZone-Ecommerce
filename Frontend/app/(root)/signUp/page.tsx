@@ -5,12 +5,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from 'react';
-import { signUp } from '../../services/auth';
+// Authentication removed
 import { useRouter } from 'next/navigation';
 
 export default function SignUp(){
   const router = useRouter();
   const { toast } = useToast();
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   return(
     <main className=" mt-48 flex-1 py-8">
@@ -23,26 +28,40 @@ export default function SignUp(){
 
           <form className="space-y-6" onSubmit={async (e) => {
             e.preventDefault();
-            const formData = new FormData(e.currentTarget);
+            setError('');
+
             try {
-              await signUp({
-                fullName: formData.get('fullname') as string,
-                email: formData.get('email') as string,
-                password: formData.get('password') as string
+              const response = await fetch('http://localhost:3002/auth/signup', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, password }),
               });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                throw new Error(data.message || 'Registration failed');
+              }
+
+              // Store the token
+              localStorage.setItem('token', data.token);
+
               toast({
                 title: "Success!",
                 description: "Your account has been created successfully.",
                 variant: "default",
               });
-              router.push('/profile');
-            } catch (error: any) {
+
+              router.push('/SignIn');
+            } catch (err: any) {
+              setError(err.message);
               toast({
                 title: "Error",
-                description: error.message || 'Failed to create account',
+                description: err.message,
                 variant: "destructive",
               });
-              console.error('Signup error:', error);
             }
           }}>
                 <div>
@@ -57,8 +76,11 @@ export default function SignUp(){
                       type="text"
                       id="fullname"
                       name="fullname"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       placeholder="Enter your full name"
                       className="flex-1 border rounded-r-md p-2 focus:outline-none focus:ring-1 focus:ring-[#FF5722]"
+                      required
                     />
                   </div>
                 </div>
@@ -77,8 +99,11 @@ export default function SignUp(){
                       type="email"
                       id="email"
                       name="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="example@gmail.com"
                       className="flex-1 border rounded-r-md p-2 focus:outline-none focus:ring-1 focus:ring-[#FF5722]"
+                      required
                     />
                   </div>
                 </div>
@@ -108,8 +133,12 @@ export default function SignUp(){
                       type="password"
                       id="password"
                       name="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
                       className="flex-1 border rounded-r-md p-2 focus:outline-none focus:ring-1 focus:ring-[#FF5722]"
+                      required
+                      minLength={8}
                     />
                     
                   </div>

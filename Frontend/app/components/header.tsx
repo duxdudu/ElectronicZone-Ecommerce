@@ -2,33 +2,30 @@
 // import ShoppingCart from "@/components/shopping-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
 import {
   ChevronDown,
   MapPin,
-  Moon,
   Phone,
   Search,
   ShoppingCart,
   ShoppingCartIcon,
-  Sun,
-  User,
+  User
 } from "lucide-react";
 import Link from "next/link";
 import CategoryNav from "./Category-nav";
 import { useState, useEffect } from "react";
 import { useCart } from "@/app/context/CartContext";
-import { useTheme } from "@/app/context/ThemeContext";
-// REMOVED AUTH IMPORT
+
 
 export default function Header() {
-  const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("EN");
   const { items } = useCart();
-  // REMOVED AUTH STATE
+ 
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+
 
   const languages = [
     { code: "EN", name: "English" },
@@ -92,20 +89,6 @@ export default function Header() {
             <div className="flex items-center">
               <span className="text-lg">$Dollars</span>
             </div>
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                className="mr-2"
-              >
-                {theme === "light" ? (
-                  <Moon className="h-6 w-6" />
-                ) : (
-                  <Sun className="h-6 w-6" />
-                )}
-              </Button>
-            </div>
             <div className="relative group">
               <button
                 className="flex items-center text-white hover:text-gray-200 transition-colors"
@@ -113,9 +96,7 @@ export default function Header() {
               >
                 <span className="text-lg">{selectedLanguage}</span>
                 <ChevronDown
-                  className={`h-6 w-6 ml-2 transition-transform ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
+                  className={`h-6 w-6 ml-2 transition-transform ${isOpen ? "rotate-180" : ""}`}
                 />
               </button>
               {isOpen && (
@@ -175,7 +156,20 @@ export default function Header() {
             </form>
           </div>
 
+
+
           <div className="flex items-center space-x-4">
+            <Link href="/dashboard" className="text-orange-500 hover:text-orange-600 transition-colors">
+              <Button variant="ghost" className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                </svg>
+                Dashboard
+              </Button>
+            </Link>
+            <Link href="/SignIn">
+              <Button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors duration-300 ease-in-out transform hover:scale-105">SignIn</Button>
+            </Link>
             <div className="relative">
               <Link href="/Carts">
                 <ShoppingCart className="h-6 w-6" />
@@ -184,12 +178,6 @@ export default function Header() {
                 </span>
               </Link>
             </div>
-            <Link
-              href="/dashboard"
-              className="border-2 border-orange-500 text-white px-6 py-2.5 rounded-3xl font-semibold transition-all duration-300 ease-in-out hover:bg-white hover:text-orange-500 active:scale-95 shadow-sm hover:shadow-md flex items-center space-x-2 bg-orange-500"
-            >
-              <button>Dashboard</button>
-            </Link>
           </div>
         </div>
       </header>

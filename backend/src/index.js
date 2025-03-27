@@ -5,8 +5,11 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import swaggerUi from "swagger-ui-express";
 import productRoutes from "./routes/productRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import ensureUploadsDir from "./scripts/ensureUploadsDir.js";
+import swaggerSpec from "./config/swagger.js";
 
 // Ensure uploads directory exists
 ensureUploadsDir();
@@ -21,7 +24,16 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads')); // Serve uploaded files
+// Serve uploaded files with additional security headers
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+}, express.static('uploads', {
+  dotfiles: 'deny',
+  index: false,
+  maxAge: '1d'
+}));
 app.use(morgan("dev"));
 
 // Rate limiting
@@ -39,7 +51,11 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
+// Swagger UI
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Routes
+app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
 
 // Basic route

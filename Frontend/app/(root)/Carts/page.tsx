@@ -33,23 +33,11 @@ export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotal } = useCart();
   const { toast } = useToast();
   const [showCardForm, setShowCardForm] = useState(false);
-  const [cardData, setCardData] = useState({
-    cardNumber: "",
-    expDate: "",
-    cvv: "",
-  });
 
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
     email: "",
     phone: "",
-    houseNo: "",
-    address: "",
-    sector: "",
-    cell: "",
-    postalCode: "",
-    landmark: "",
+    bankAccountNumber: "",
   });
   const [deliveryOption, setDeliveryOption] = useState("standard");
   const [paymentMethod, setPaymentMethod] = useState("delivery");
@@ -66,49 +54,26 @@ export default function CartPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // Validate form data
-      if (
-        !formData.firstName ||
-        !formData.lastName ||
-        !formData.email ||
-        !formData.phone ||
-        !formData.houseNo ||
-        !formData.address ||
-        !formData.sector ||
-        !formData.cell
-      ) {
-        throw new Error("Please fill in all required fields");
+      // Basic validation
+      if (!formData.email || !formData.phone) {
+        throw new Error("Please provide contact information");
       }
 
-      // Calculate shipping cost based on delivery option
-      const shippingCost =
-        deliveryOption === "standard"
-          ? 0
-          : deliveryOption === "express"
-          ? 2
-          : 25;
-
       const orderData = {
-        product: items.map(item => item.name).join(", "),
-        description: items.map(item => `${item.name} (${item.quantity})`).join(", "),
-        price: getTotal() + shippingCost,
+        product: items.map((item) => item.name).join(", "),
+        description: items
+          .map((item) => `${item.name} (${item.quantity})`)
+          .join(", "),
+        price: getTotal(),
         category: items[0]?.category || "Mixed",
         status: "pending",
         paymentInfo: {
-          amount: getTotal() + shippingCost,
-          method: paymentMethod
+          amount: getTotal(),
+          method: paymentMethod,
         },
-        customer: `${formData.firstName} ${formData.lastName}`,
-        shippingAddress: {
-          houseNo: formData.houseNo,
-          address: formData.address,
-          sector: formData.sector,
-          cell: formData.cell,
-          postalCode: formData.postalCode,
-          email: formData.email,
-          phone: formData.phone
-        },
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        email: formData.email,
+        phone: formData.phone,
       };
 
       const response = await fetch("http://localhost:3002/orders", {
@@ -132,16 +97,9 @@ export default function CartPage() {
 
       // Reset form and cart
       setFormData({
-        firstName: "",
-        lastName: "",
         email: "",
         phone: "",
-        houseNo: "",
-        address: "",
-        sector: "",
-        cell: "",
-        postalCode: "",
-        landmark: "",
+        bankAccountNumber: ""
       });
       setShowing(false);
       setShowingDelivery(false);

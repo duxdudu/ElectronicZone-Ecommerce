@@ -102,13 +102,7 @@ export default function DashHeader({ ComponentToRender }: ReusableParentProps) {
           </Avatar>
           <div>
             <div className="font-medium">Dux-dudu</div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 text-xs px-2 mt-1 text-orange-500 border-orange-500"
-            >
-              Logout
-            </Button>
+            {/* Logout button removed as part of authentication removal */}
           </div>
         </div>
       </div>

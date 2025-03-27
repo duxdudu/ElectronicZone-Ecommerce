@@ -2,11 +2,12 @@ import { ChevronLeft, ChevronRight, Download, Eye, FileEdit, Filter, Plus, Searc
 import Image from 'next/image'
 import React from 'react'
 import Link from "next/link";
+import { API_BASE_URL, getImageUrl } from '../utils/constants';
 
 const DashProducts = () => {
   const handleDelete = (productId: string | number, productName: string) => {
     if (window.confirm(`Are you sure you want to delete ${productName}?`)) {
-      fetch(`http://localhost:3002/products/${productId}`, {
+      fetch(`${API_BASE_URL}/products/${productId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
@@ -29,13 +30,24 @@ const DashProducts = () => {
   productCount: number;
 }
 
+interface Product {
+  id: string | number;
+  name: string;
+  price: string;
+  size: string;
+  quantity: number;
+  date: string;
+  status: string;
+  image: string;
+}
+
 const [categories, setCategories] = React.useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = React.useState('Computers');
-  const [products, setProducts] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
+const [selectedCategory, setSelectedCategory] = React.useState('Computers');
+const [products, setProducts] = React.useState<Product[]>([]);
+const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    fetch('http://localhost:3002/products/category/Computers')
+    fetch(`${API_BASE_URL}/products/category/Computers`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch categories');
         return res.json();
@@ -61,21 +73,26 @@ const [categories, setCategories] = React.useState<Category[]>([]);
 
   React.useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:3002/products/category/${selectedCategory}`)
+    fetch(`${API_BASE_URL}/products/category/${selectedCategory}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch products');
         return res.json();
       })
-      .then(data => setProducts(data.map(p => ({
-        id: p._id || p.id,
-        name: p.name,
-        price: p.price.toFixed(2),
-        size: p.specifications?.size || '-',
-        quantity: p.stockQuantity || 10,
-        date: p.createdAt || new Date().toISOString(),
-        status: (p.stockQuantity > 0 || p.inStock) ? 'Available' : 'Out of Stock',
-        image: p.image || '/placeholder.svg'
-      }))))
+      .then(data => {
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid data format received from server');
+        }
+        setProducts(data.map(p => ({
+          id: p._id || p.id,
+          name: p.name,
+          price: typeof p.price === 'number' ? p.price.toFixed(2) : '0.00',
+          size: p.specifications?.size || '-',
+          quantity: p.stockQuantity || 10,
+          date: p.createdAt || new Date().toISOString(),
+          status: (p.stockQuantity > 0 || p.inStock) ? 'Available' : 'Out of Stock',
+          image: getImageUrl(p.image)
+        })));
+      })
       .catch(err => {
         console.error('Error fetching products:', err);
         setProducts([]);
@@ -312,12 +329,14 @@ const [categories, setCategories] = React.useState<Category[]>([]);
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gray-100 rounded">
+                          <div className="relative w-8 h-8 bg-gray-100 rounded overflow-hidden">
                             <Image
                               src={product.image}
-                              width={32}
-                              height={32}
+                              fill
+                              sizes="(max-width: 32px) 100vw"
+                              className="object-cover"
                               alt={product.name}
+                              priority
                             />
                           </div>
                           <div>

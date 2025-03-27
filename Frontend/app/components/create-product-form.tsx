@@ -9,13 +9,15 @@ const validCategories = ['Computers', 'Smartphones', 'TV & Monitors', 'Gaming Eq
 export default function CreateProductForm() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [formData, setFormData] = useState<CreateProductData>({
     name: '',
     price: 0,
     description: '',
     image: '',
     category: '',
-    inStock: true
+    inStock: true,
+    quantity: 0
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -30,37 +32,84 @@ export default function CreateProductForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Here you would typically upload the image to your storage service
-    // For now, we'll use a placeholder URL
+    if (file.size > 4 * 1024 * 1024) {
+      toast({
+        title: 'Error',
+        description: 'Image size must be less than 4MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/svg+xml'].includes(file.type)) {
+      toast({
+        title: 'Error',
+        description: 'Only JPEG, PNG and SVG files are allowed',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
     setFormData(prev => ({
       ...prev,
       image: URL.createObjectURL(file)
     }));
+    setSelectedImage(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    if (!formData.description || !selectedImage) {
+      toast({
+        title: 'Error',
+        description: formData.description ? 'Please select an image' : 'Please fill all required fields',
+        variant: 'destructive',
+      });
+      setLoading(false);
+      return;
+    }
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('name', formData.name);
+    formDataToSend.append('price', formData.price.toString());
+    formDataToSend.append('description', formData.description);
+    formDataToSend.append('category', formData.category);
+        formDataToSend.append('quantity', formData.quantity.toString());
+    formDataToSend.append('image', selectedImage);
+
     try {
-      const result = await createProduct(formData);
-      if (result.success) {
-        toast({
-          title: 'Success',
-          description: 'Product created successfully!',
-        });
-        // Reset form
-        setFormData({
-          name: '',
-          price: 0,
-          description: '',
-          image: '',
-          category: '',
-          inStock: true
-        });
-      } else {
-        throw new Error(result.error);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+        method: 'POST',
+        body: formDataToSend
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create product');
       }
+
+      const data = await response.json();
+      
+      toast({
+        title: 'Success',
+        description: 'Product created successfully!',
+      });
+
+      // Reset form
+      setFormData({
+        name: '',
+        price: 0,
+        description: '',
+        image: '',
+        category: '',
+        inStock: true,
+        quantity: 0
+      });
+      setSelectedImage(null);
     } catch (error) {
       toast({
         title: 'Error',
@@ -144,6 +193,20 @@ export default function CreateProductForm() {
               <option key={category} value={category}>{category}</option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">Quantity</label>
+          <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            value={formData.quantity}
+            onChange={handleInputChange}
+            required
+            min="0"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
         </div>
 
         <div className="flex items-center">
