@@ -23,22 +23,57 @@ import {
  *       properties:
  *         name:
  *           type: string
- *           description: The name of the product
+ *           description: Product name
  *         price:
  *           type: number
- *           description: The price of the product
+ *           description: Product price
  *         description:
  *           type: string
- *           description: The description of the product
+ *           description: Product description
+ *         image:
+ *           type: object
+ *           properties:
+ *             storageType:
+ *               type: string
+ *               enum: [cloud, local]
+ *             url:
+ *               type: string
+ *             public_id:
+ *               type: string
+ *             localUrl:
+ *               type: string
  *         category:
  *           type: string
- *           description: The category of the product
- *         quantity:
- *           type: integer
- *           description: The quantity of the product in stock
- *         image:
- *           type: string
- *           description: The URL of the product image
+ *           enum: [Computers, Smartphones, TV & Monitors, Gaming Equipment, Headphones, Speakers, Accessories]
+ *         inStock:
+ *           type: boolean
+ *           default: true
+ *         rating:
+ *           type: number
+ *           minimum: 0
+ *           maximum: 5
+ *         reviews:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               user:
+ *                 type: string
+ *               rating:
+ *                 type: number
+ *               comment:
+ *                 type: string
+ *         discount:
+ *           type: number
+ *           minimum: 0
+ *           maximum: 100
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Products
+ *   description: Product management endpoints
  */
 
 const router = express.Router();
@@ -60,6 +95,8 @@ const router = express.Router();
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Product'
+ *       500:
+ *         description: Server error
  */
 router.get("/", getAllProducts);
 
@@ -80,16 +117,19 @@ router.delete("/:id", deleteProduct);
  *         name: q
  *         schema:
  *           type: string
+ *         required: true
  *         description: Search query string
  *     responses:
  *       200:
- *         description: Search results
+ *         description: List of matching products
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Product'
+ *       500:
+ *         description: Server error
  */
 router.get("/search", searchProducts);
 
@@ -102,9 +142,10 @@ router.get("/search", searchProducts);
  *     parameters:
  *       - in: path
  *         name: category
- *         required: true
  *         schema:
  *           type: string
+ *           enum: [Computers, Smartphones, TV & Monitors, Gaming Equipment, Headphones, Speakers, Accessories]
+ *         required: true
  *         description: Product category
  *     responses:
  *       200:
@@ -115,6 +156,8 @@ router.get("/search", searchProducts);
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Product'
+ *       500:
+ *         description: Server error
  */
 router.get("/category/:category", getProductsByCategory);
 
@@ -122,14 +165,14 @@ router.get("/category/:category", getProductsByCategory);
  * @swagger
  * /products/{id}:
  *   get:
- *     summary: Get a product by ID
+ *     summary: Get product by ID
  *     tags: [Products]
  *     parameters:
  *       - in: path
  *         name: id
- *         required: true
  *         schema:
  *           type: string
+ *         required: true
  *         description: Product ID
  *     responses:
  *       200:
@@ -140,6 +183,8 @@ router.get("/category/:category", getProductsByCategory);
  *               $ref: '#/components/schemas/Product'
  *       404:
  *         description: Product not found
+ *       500:
+ *         description: Server error
  */
 router.get("/:id", getProductById);
 
@@ -149,6 +194,8 @@ router.get("/:id", getProductById);
  *   post:
  *     summary: Create a new product
  *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -160,8 +207,6 @@ router.get("/:id", getProductById);
  *               - price
  *               - description
  *               - category
- *               - quantity
- *               - image
  *             properties:
  *               name:
  *                 type: string
@@ -171,21 +216,12 @@ router.get("/:id", getProductById);
  *                 type: string
  *               category:
  *                 type: string
- *                 enum:
- *                   - Computers
- *                   - Smartphones
- *                   - TV & Monitors
- *                   - Gaming Equipment
- *                   - Headphones
- *                   - Speakers
- *                   - Accessories
- *               quantity:
- *                 type: integer
- *                 minimum: 0
+ *                 enum: [Computers, Smartphones, TV & Monitors, Gaming Equipment, Headphones, Speakers, Accessories]
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: Image file (JPEG, PNG, or SVG only, max 4MB)
+ *               imageUrl:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Product created successfully
@@ -193,6 +229,12 @@ router.get("/:id", getProductById);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Product'
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
  */
 router.post("/", upload.single("image"), createProduct);
 
@@ -202,18 +244,24 @@ router.post("/", upload.single("image"), createProduct);
  *   delete:
  *     summary: Delete a product
  *     tags: [Products]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
- *         required: true
  *         schema:
  *           type: string
+ *         required: true
  *         description: Product ID
  *     responses:
  *       200:
  *         description: Product deleted successfully
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Product not found
+ *       500:
+ *         description: Server error
  */
 router.delete("/:id", async (req, res) => {
   try {

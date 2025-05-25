@@ -19,6 +19,7 @@ export const upload = multer({
 export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find();
+    console.log(products);
     const responseProducts = products.map((product) => {
       const prod = product.toObject();
       prod.image =
